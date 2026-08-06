@@ -76,12 +76,13 @@
              onBack={() => setCurrentStep(2)}
            />
          )}
-         {currentStep === 4 && (
-           <ExportPanel
-             project={project}
-             onBack={() => setCurrentStep(3)}
-           />
-         )}
+        {currentStep === 4 && (
+  <ExportPanel
+    project={project}
+    onBack={() => setCurrentStep(3)}
+    onGoToStep={(step) => setCurrentStep(step)}
+  />
+)}
          {/* Adicionado o passo 5 apontando para o ColabExportPanel */}
          {currentStep === 5 && (
            <ColabExportPanel

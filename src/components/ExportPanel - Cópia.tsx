@@ -10,7 +10,6 @@ declare var AudioData: any;
 interface Props {
   project: ProjectState;
   onBack: () => void;
-  onGoToStep: (step: number) => void; // Adicione esta linha
 }
 
 export default function ExportPanel({ project, onBack }: Props) {
@@ -493,38 +492,26 @@ export default function ExportPanel({ project, onBack }: Props) {
           </div>
         )}
 
-{!isExporting && !downloadUrl && (
-          <div className="space-y-4">
-            {/* Bloco principal de botões de ação local */}
-            <div className="flex flex-col sm:flex-row gap-4">
-              <button
-                onClick={onBack}
-                className="px-4 py-3 border border-[#3d3d3d] hover:bg-[#3d3d3d] rounded-md font-medium transition-colors text-center"
-              >
-                Voltar
-              </button>
-              <button
-                onClick={exportAudioOnly}
-                className="flex-1 px-4 py-3 bg-[#3d3d3d] hover:bg-[#4d4d4d] rounded-md font-medium transition-colors flex items-center justify-center gap-2"
-                title="Extrai o áudio original em formato WAV para você juntar depois"
-              >
-                <Music className="w-5 h-5" /> Exportar Somente Áudio (WAV)
-              </button>
-              <button
-                onClick={startExport}
-                className="flex-1 bg-[#ff0000] hover:bg-[#cc0000] text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
-              >
-                <Download className="w-5 h-5" /> Iniciar Exportação (Local)
-              </button>
-            </div>
-
-            {/* 🔥 NOVO BOTÃO: Atalho direto para o Google Colab */}
+        {!isExporting && !downloadUrl && (
+          <div className="flex flex-col sm:flex-row gap-4">
             <button
-              onClick={() => onGoToStep(5)}
-              className="w-full py-3 bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/40 text-sky-300 rounded-md font-medium transition-colors flex items-center justify-center gap-2 text-sm shadow-sm"
+              onClick={onBack}
+              className="px-4 py-3 border border-[#3d3d3d] hover:bg-[#3d3d3d] rounded-md font-medium transition-colors text-center"
             >
-              <Sparkles className="w-4 h-4 text-sky-400" />
-              <span>Ou Processar via Google Colab (Resolução Original / Sem Travamentos)</span>
+              Voltar
+            </button>
+            <button
+              onClick={exportAudioOnly}
+              className="flex-1 px-4 py-3 bg-[#3d3d3d] hover:bg-[#4d4d4d] rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+              title="Extrai o áudio original em formato WAV para você juntar depois"
+            >
+              <Music className="w-5 h-5" /> Exportar Somente Áudio (WAV)
+            </button>
+            <button
+              onClick={startExport}
+              className="flex-1 bg-[#ff0000] hover:bg-[#cc0000] text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center gap-2"
+            >
+              <Download className="w-5 h-5" /> Iniciar Exportação
             </button>
           </div>
         )}
