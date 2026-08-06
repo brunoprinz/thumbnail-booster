@@ -21,7 +21,6 @@
    });
  
    const [currentStep, setCurrentStep] = useState<number>(1);
-   const [includeAudio, setIncludeAudio] = useState<boolean>(false); // Adicione aqui
  
    const handleVideoUpload = (file: File) => {
      const url = URL.createObjectURL(file);
@@ -80,8 +79,6 @@
         {currentStep === 4 && (
   <ExportPanel
     project={project}
-    includeAudio={includeAudio}       // Passando o estado
-    setIncludeAudio={setIncludeAudio} // Passando a função de controle
     onBack={() => setCurrentStep(3)}
     onGoToStep={(step) => setCurrentStep(step)} // <--- Confirme se esta linha está ativa aqui
   />
@@ -90,7 +87,6 @@
          {currentStep === 5 && (
            <ColabExportPanel
              project={project}
-             includeAudio={includeAudio}       // Passando o estado para o Colab
              onBack={() => setCurrentStep(4)}
            />
          )}
