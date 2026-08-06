@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ProjectState, VideoEdit } from '../types';
 import * as Mp4Muxer from 'mp4-muxer';
-import { Download, AlertTriangle, Settings2, Music, Film, Layers } from 'lucide-react';
+import { Download, AlertTriangle, Settings2, Music, Film, Layers, Sparkles } from 'lucide-react';
 
 // Declarações para evitar erros de TypeScript com WebCodecs
 declare var AudioEncoder: any;
