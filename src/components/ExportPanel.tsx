@@ -15,7 +15,7 @@ interface Props {
   onGoToStep: (step: number) => void;
 }
 
-export default function ExportPanel({ project, onBack, onGoToStep }: Props) {
+export default function ExportPanel({ project, includeAudio, setIncludeAudio, onBack, onGoToStep }: Props) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
