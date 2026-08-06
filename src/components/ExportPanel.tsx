@@ -9,8 +9,10 @@ declare var AudioData: any;
 
 interface Props {
   project: ProjectState;
+  includeAudio: boolean;            // Adicione
+  setIncludeAudio: (val: boolean) => void; // Adicione
   onBack: () => void;
-  onGoToStep: (step: number) => void; // Adicione esta linha
+  onGoToStep: (step: number) => void;
 }
 
 export default function ExportPanel({ project, onBack, onGoToStep }: Props) {
@@ -25,7 +27,7 @@ export default function ExportPanel({ project, onBack, onGoToStep }: Props) {
   const [resolution, setResolution] = useState<'original' | '720' | '480'>('original');
   const [exportMode, setExportMode] = useState<'full' | 'batch'>('full');
   const [batchPart, setBatchPart] = useState<number>(0);
-  const [includeAudio, setIncludeAudio] = useState<boolean>(false);
+  
 
   const [loadedImages, setLoadedImages] = useState<Record<string, HTMLImageElement>>({});
 
@@ -469,7 +471,7 @@ export default function ExportPanel({ project, onBack, onGoToStep }: Props) {
                     <input
                       type="checkbox"
                       checked={includeAudio}
-                      onChange={(e) => setIncludeAudio(e.target.checked)}
+                      onChange={(e) => setIncludeAudio(e.target.checked)} // Vem da prop
                       className="sr-only"
                     />
                     <div className={`w-10 h-6 rounded-full transition-colors ${includeAudio ? 'bg-[#ff0000]' : 'bg-[#3d3d3d]'}`}></div>
