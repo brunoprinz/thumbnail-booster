@@ -13,7 +13,7 @@ interface Props {
   onGoToStep: (step: number) => void; // Adicione esta linha
 }
 
-export default function ExportPanel({ project, onBack }: Props) {
+export default function ExportPanel({ project, onBack, onGoToStep }: Props) {
   const [isExporting, setIsExporting] = useState(false);
   const [progress, setProgress] = useState(0);
   const [status, setStatus] = useState('');
