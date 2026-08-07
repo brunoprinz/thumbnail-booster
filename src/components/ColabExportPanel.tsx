@@ -16,109 +16,105 @@ export default function ColabExportPanel({ project, includeAudio, onBack }: Prop
     const adjustments = JSON.stringify(project.adjustments);
 
     return `# ==============================================================================
-    # 🚀 THUMBNAIL BOOSTER - PIPELINE COLAB (RESOLUÇÃO ORIGINAL + ÁUDIO)
-    # ==============================================================================
-    
-    import os
-    import subprocess
-    from google.colab import files
-    
-    print("⚡ [1/4] Instalando dependências...")
-    !pip install -q opencv-python numpy
-    !apt-get install -y ffmpeg
-    
-    import cv2
-    import numpy as np
-    
-    # Dados injetados
-    EDITS_DATA = ${editsJson}
-    ADJUSTMENTS = ${adjustments}
-    INCLUDE_AUDIO = ${includeAudio ? 'True' : 'False'}
-    
-    input_file = "input_video.mp4"
-    temp_video = "temp_video.mp4"
-    final_file = "video_exportado_final.mp4"
-    
-    if not os.path.exists(input_file):
-        print("📤 Por favor, faça upload do seu vídeo original de entrada:")
-        uploaded = files.upload()
-        for filename in uploaded.keys():
-            os.rename(filename, input_file)
-            break
-    
-    print("🎬 [2/4] Processando vídeo mantendo a resolução original...")
-    cap = cv2.VideoCapture(input_file)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-    
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(temp_video, fourcc, fps, (width, height))
-    
-    brightness = ADJUSTMENTS.get('brightness', 100) / 100.0
-    contrast = ADJUSTMENTS.get('contrast', 100) / 100.0
-    saturation = ADJUSTMENTS.get('saturation', 100) / 100.0
-    
-    frame_idx = 0
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-            
-        current_time = frame_idx / fps
+# 🚀 THUMBNAIL BOOSTER - PIPELINE COLAB (RESOLUÇÃO ORIGINAL + ÁUDIO)
+# ==============================================================================
+
+import os
+import subprocess
+from google.colab import files
+
+print("⚡ [1/4] Instalando dependências...")
+get_ipython().system('pip install -q opencv-python numpy')
+get_ipython().system('apt-get install -y ffmpeg')
+
+import cv2
+import numpy as np
+
+EDITS_DATA = ${editsJson}
+ADJUSTMENTS = ${adjustments}
+INCLUDE_AUDIO = ${includeAudio ? 'True' : 'False'}
+
+input_file = "input_video.mp4"
+temp_video = "temp_video.mp4"
+final_file = "video_exportado_final.mp4"
+
+if not os.path.exists(input_file):
+    print("📤 Por favor, faça upload do seu vídeo original de entrada:")
+    uploaded = files.upload()
+    for filename in uploaded.keys():
+        os.rename(filename, input_file)
+        break
+
+print("🎬 [2/4] Processando vídeo mantendo a resolução original...")
+cap = cv2.VideoCapture(input_file)
+width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
+total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+
+fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+out = cv2.VideoWriter(temp_video, fourcc, fps, (width, height))
+
+brightness = ADJUSTMENTS.get('brightness', 100) / 100.0
+contrast = ADJUSTMENTS.get('contrast', 100) / 100.0
+saturation = ADJUSTMENTS.get('saturation', 100) / 100.0
+
+frame_idx = 0
+while cap.isOpened():
+    ret, frame = cap.read()
+    if not ret:
+        break
         
-        # Ajustes globais de cor
-        frame = cv2.convertScaleAbs(frame, alpha=contrast, beta=(brightness - 1) * 50)
-        
-        # Renderizar edições
-        for edit in EDITS_DATA:
-            if current_time >= edit['startTime'] and current_time <= edit['endTime']:
-                if edit['type'] == 'text':
-                    text = edit.get('content', '')
-                    x = int(edit['x'])
-                    y = int(edit['y'])
-                    style = edit.get('style', {})
-                    font_size = int((style.get('fontSize', 48) / 72) * 24)
-                    color_hex = style.get('color', '#ffffff').replace('#', '', 1)
-                    color_bgr = (int(color_hex[4:6], 16), int(color_hex[2:4], 16), int(color_hex[0:2], 16))
-                    
-                    cv2.putText(frame, text, (x, y + font_size), cv2.FONT_HERSHEY_SIMPLEX, font_size / 24.0, color_bgr, 2, cv2.LINE_AA)
+    current_time = frame_idx / fps
     
-        out.write(frame)
-        frame_idx += 1
-        if frame_idx % 60 == 0:
-            print(f"Progresso: {int((frame_idx / total_frames) * 100)}%")
+    frame = cv2.convertScaleAbs(frame, alpha=contrast, beta=(brightness - 1) * 50)
     
-    cap.release()
-    out.release()
-    print("✅ [3/4] Renderização de vídeo concluída!")
+    for edit in EDITS_DATA:
+        if current_time >= edit['startTime'] and current_time <= edit['endTime']:
+            if edit['type'] == 'text':
+                text = edit.get('content', '')
+                x = int(edit['x'])
+                y = int(edit['y'])
+                style = edit.get('style', {})
+                font_size = int((style.get('fontSize', 48) / 72) * 24)
+                color_hex = style.get('color', '#ffffff').replace('#', '', 1)
+                color_bgr = (int(color_hex[4:6], 16), int(color_hex[2:4], 16), int(color_hex[0:2], 16))
+                
+                cv2.putText(frame, text, (x, y + font_size), cv2.FONT_HERSHEY_SIMPLEX, font_size / 24.0, color_bgr, 2, cv2.LINE_AA)
+
+    out.write(frame)
+    frame_idx += 1
+    if frame_idx % 60 == 0:
+        print(f"Progresso: {int((frame_idx / total_frames) * 100)}%")
+
+cap.release()
+out.release()
+print("✅ [3/4] Renderização de vídeo concluída!")
+
+if INCLUDE_AUDIO:
+    print("🔊 [3.5/4] Unindo áudio original com FFmpeg...")
+    subprocess.run([
+        'ffmpeg', '-y', 
+        '-i', temp_video, 
+        '-i', input_file, 
+        '-c:v', 'copy', 
+        '-c:a', 'aac', 
+        '-map', '0:v:0', 
+        '-map', '1:a:0', 
+        '-shortest', 
+        final_file
+    ])
+else:
+    print("📁 [3.5/4] Áudio desativado. Renomeando arquivo final...")
+    if os.path.exists(final_file):
+        os.remove(final_file)
+    os.rename(temp_video, final_file)
+
+print("✅ [4/4] Arquivo pronto para download!")
+files.download(final_file)
+`;
+  };
     
-    # Tratamento unificado do áudio e arquivo final
-    if INCLUDE_AUDIO:
-        print("🔊 [3.5/4] Unindo áudio original com FFmpeg...")
-        # Usa -y para sobrescrever se já existir e garante o mapeamento correto
-        subprocess.run([
-            'ffmpeg', '-y', 
-            '-i', temp_video, 
-            '-i', input_file, 
-            '-c:v', 'copy', 
-            '-c:a', 'aac', 
-            '-map', '0:v:0', 
-            '-map', '1:a:0', 
-            '-shortest', 
-            final_file
-        ])
-    else:
-        print("📁 [3.5/4] Áudio desativado. Renomeando arquivo final...")
-        if os.path.exists(final_file):
-            os.remove(final_file)
-        os.rename(temp_video, final_file)
-    
-    print("✅ [4/4] Arquivo pronto para download!")
-    files.download(final_file)
-    `;
-    };
 
   const scriptContent = generateColabScript();
 
