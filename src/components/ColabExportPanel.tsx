@@ -130,10 +130,8 @@ while cap.isOpened():
 
             elif edit['type'] == 'image':
                 # Procura a imagem carregada pelo usuário no ambiente
-                # Como o nome do blob original muda, pegamos qualquer imagem enviada ou tentamos match pelo nome
                 uploaded_files = list(uploaded_imgs.keys()) if 'uploaded_imgs' in locals() and uploaded_imgs else []
                 if uploaded_files:
-                    # Pega o primeiro arquivo enviado como fallback ou tenta associar
                     img_filename = uploaded_files[0] 
                     try:
                         overlay = Image.open(img_filename).convert("RGBA")
@@ -261,7 +259,7 @@ files.download(final_file)
           </button>
           
           <button
-            onClick(handleCopyScript)
+            onClick={handleCopyScript}
             className="flex-1 bg-[#3d3d3d] hover:bg-[#4d4d4d] text-white px-4 py-3 rounded-md font-medium transition-colors flex items-center justify-center gap-2 text-sm"
           >
             {copied ? <Check className="w-4 h-4 text-green-400" /> : <Copy className="w-4 h-4" />}
