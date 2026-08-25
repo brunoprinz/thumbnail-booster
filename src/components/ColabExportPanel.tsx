@@ -132,10 +132,13 @@ while cap.isOpened():
                 draw.text((x, y), text, font=font, fill=text_color)
 
             elif edit['type'] == 'image':
-                # Procura a imagem carregada pelo usuário no ambiente
+                # Procura as imagens carregadas e mapeia pelo índice correto da edição de imagem
                 uploaded_files = list(uploaded_imgs.keys()) if 'uploaded_imgs' in locals() and uploaded_imgs else []
                 if uploaded_files:
-                    img_filename = uploaded_files[0] 
+                    image_edits_list = [e for e in EDITS_DATA if e.get('type') == 'image']
+                    img_idx = image_edits_list.index(edit) if edit in image_edits_list else 0
+                    img_filename = uploaded_files[img_idx] if img_idx < len(uploaded_files) else uploaded_files[0]
+                    
                     try:
                         overlay = Image.open(img_filename).convert("RGBA")
                         iw = int(edit.get('width', 200))
@@ -182,7 +185,7 @@ print("✅ [5/5] Arquivo pronto para download!")
 files.download(final_file)
 `;
   };
-
+  
   const scriptContent = generateColabScript();
 
   const handleCopyScript = () => {
