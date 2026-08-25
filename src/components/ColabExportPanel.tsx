@@ -12,7 +12,10 @@ export default function ColabExportPanel({ project, includeAudio, onBack }: Prop
   const [copied, setCopied] = useState(false);
 
   const generateColabScript = () => {
-    const editsJson = JSON.stringify(project.edits, null, 2);
+    // Ordena as edições cronicamente pelo startTime para garantir a sequência correta
+    const sortedEdits = [...(project.edits || [])].sort((a, b) => (a.startTime || 0) - (b.startTime || 0));
+    
+    const editsJson = JSON.stringify(sortedEdits, null, 2);
     const adjustments = JSON.stringify(project.adjustments);
 
     return `# ==============================================================================
