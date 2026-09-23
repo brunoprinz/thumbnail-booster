@@ -12,27 +12,23 @@ export default function ColabExportPanel({ project, includeAudio, onBack }: Prop
   const [copied, setCopied] = useState(false);
 
   const generateColabScript = () => {
-    // Ordena as edições cronicamente pelo startTime para garantir a sequência correta
-    const sortedEdits = [...(project.edits || [])].sort((a, b) => (a.startTime || 0) - (b.startTime || 0));
-    
-    const editsJson = JSON.stringify(sortedEdits, null, 2);
+    const editsJson = JSON.stringify(project.edits, null, 2);
     const adjustments = JSON.stringify(project.adjustments);
 
     return `# ==============================================================================
-# 🚀 THUMBNAIL BOOSTER - PIPELINE COLAB (BLINDADO: PIL + UPLOAD DE IMAGENS + ÁUDIO)
+# 🚀 THUMBNAIL BOOSTER - PIPELINE COLAB (RESOLUÇÃO ORIGINAL + ÁUDIO)
 # ==============================================================================
 
 import os
 import subprocess
 from google.colab import files
 
-print("⚡ [1/5] Instalando dependências (OpenCV, Pillow, Numpy)...")
-get_ipython().system('pip install -q opencv-python numpy Pillow')
+print("⚡ [1/4] Instalando dependências...")
+get_ipython().system('pip install -q opencv-python numpy')
 get_ipython().system('apt-get install -y ffmpeg')
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw, ImageFont
 
 EDITS_DATA = ${editsJson}
 ADJUSTMENTS = ${adjustments}
@@ -43,23 +39,13 @@ temp_video = "temp_video.mp4"
 final_file = "video_exportado_final.mp4"
 
 if not os.path.exists(input_file):
-    print("📤 Por favor, faça upload do seu VÍDEO original de entrada:")
+    print("📤 Por favor, faça upload do seu vídeo original de entrada:")
     uploaded = files.upload()
     for filename in uploaded.keys():
         os.rename(filename, input_file)
         break
 
-# Passo de verificação e upload dinâmico de imagens se houver edições do tipo 'image'
-image_edits = [e for e in EDITS_DATA if e.get('type') == 'image']
-if image_edits:
-    print(f"🖼️ Detectada(s) {len(image_edits)} imagem(ns) usada(s) na edição.")
-    print("📤 Por favor, faça o upload da(s) imagem(ns) correspondente(s):")
-    uploaded_imgs = files.upload()
-    # Mapeia os arquivos enviados para o diretório de trabalho local
-    for filename in uploaded_imgs.keys():
-        print(f"✅ Imagem carregada: {filename}")
-
-print("🎬 [2/5] Processando vídeo com PIL (Suporte a acentos e contornos)...")
+print("🎬 [2/4] Processando vídeo mantendo a resolução original...")
 cap = cv2.VideoCapture(input_file)
 width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
 height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -73,14 +59,6 @@ brightness = ADJUSTMENTS.get('brightness', 100) / 100.0
 contrast = ADJUSTMENTS.get('contrast', 100) / 100.0
 saturation = ADJUSTMENTS.get('saturation', 100) / 100.0
 
-# Tenta carregar uma fonte padrão do sistema Linux ou usa default
-try:
-    font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
-    if not os.path.exists(font_path):
-        font_path = "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf"
-except:
-    font_path = None
-
 frame_idx = 0
 while cap.isOpened():
     ret, frame = cap.read()
@@ -89,69 +67,20 @@ while cap.isOpened():
         
     current_time = frame_idx / fps
     
-    # Ajustes de cor globais via OpenCV
     frame = cv2.convertScaleAbs(frame, alpha=contrast, beta=(brightness - 1) * 50)
     
-    # Verifica se há edições ativas neste frame
-    active_edits = [e for e in EDITS_DATA if current_time >= e['startTime'] and current_time <= e['endTime']]
-    
-    if active_edits:
-        # Converte o frame do OpenCV (BGR) para PIL (RGB) para desenhar textos e imagens perfeitamente
-        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        pil_img = Image.fromarray(frame_rgb)
-        draw = ImageDraw.Draw(pil_img)
-
-        for edit in active_edits:
+    for edit in EDITS_DATA:
+        if current_time >= edit['startTime'] and current_time <= edit['endTime']:
             if edit['type'] == 'text':
                 text = edit.get('content', '')
-                x = float(edit['x'])
-                y = float(edit['y'])
+                x = int(edit['x'])
+                y = int(edit['y'])
                 style = edit.get('style', {})
-                font_size = int(style.get('fontSize', 48))
+                font_size = int((style.get('fontSize', 48) / 72) * 24)
+                color_hex = style.get('color', '#ffffff').replace('#', '', 1)
+                color_bgr = (int(color_hex[4:6], 16), int(color_hex[2:4], 16), int(color_hex[0:2], 16))
                 
-                # Cores
-                color_hex = style.get('color', '#ffffff').strip('#')
-                text_color = tuple(int(color_hex[i:i+2], 16) for i in (0, 2, 4)) if len(color_hex) == 6 else (255, 255, 255)
-                
-                border_hex = style.get('borderColor', '#000000').strip('#')
-                border_color = tuple(int(border_hex[i:i+2], 16) for i in (0, 2, 4)) if len(border_hex) == 6 else (0, 0, 0)
-                border_width = int(style.get('borderWidth', 2))
-
-                try:
-                    font = ImageFont.truetype(font_path, font_size) if font_path and os.path.exists(font_path) else ImageFont.load_default()
-                except:
-                    font = ImageFont.load_default()
-
-                # Desenha o contorno (stroke simulado com offset) e o texto principal (suporta acentos perfeitamente)
-                if border_width > 0:
-                    for adj_x in range(-border_width, border_width + 1):
-                        for adj_y in range(-border_width, border_width + 1):
-                            if adj_x != 0 or adj_y != 0:
-                                draw.text((x + adj_x, y + adj_y), text, font=font, fill=border_color)
-                
-                draw.text((x, y), text, font=font, fill=text_color)
-
-            elif edit['type'] == 'image':
-                # Procura as imagens carregadas e mapeia pelo índice correto da edição de imagem
-                uploaded_files = list(uploaded_imgs.keys()) if 'uploaded_imgs' in locals() and uploaded_imgs else []
-                if uploaded_files:
-                    image_edits_list = [e for e in EDITS_DATA if e.get('type') == 'image']
-                    img_idx = image_edits_list.index(edit) if edit in image_edits_list else 0
-                    img_filename = uploaded_files[img_idx] if img_idx < len(uploaded_files) else uploaded_files[0]
-                    
-                    try:
-                        overlay = Image.open(img_filename).convert("RGBA")
-                        iw = int(edit.get('width', 200))
-                        ih = int(edit.get('height', 200))
-                        overlay = overlay.resize((iw, ih))
-                        ix = int(edit['x'])
-                        iy = int(edit['y'])
-                        pil_img.paste(overlay, (ix, iy), overlay)
-                    except Exception as e:
-                        print(f"Erro ao inserir imagem: {e}")
-
-        # Retorna o frame processado do PIL de volta para o formato do OpenCV (BGR)
-        frame = cv2.cvtColor(np.array(pil_img), cv2.COLOR_RGB2BGR)
+                cv2.putText(frame, text, (x, y + font_size), cv2.FONT_HERSHEY_SIMPLEX, font_size / 24.0, color_bgr, 2, cv2.LINE_AA)
 
     out.write(frame)
     frame_idx += 1
@@ -160,15 +89,15 @@ while cap.isOpened():
 
 cap.release()
 out.release()
-print("✅ [3/5] Renderização de vídeo concluída!")
+print("✅ [3/4] Renderização de vídeo concluída!")
 
 if INCLUDE_AUDIO:
-    print("🔊 [4/5] Unindo áudio original com FFmpeg...")
+    print("🔊 [3.5/4] Unindo áudio original e convertendo para MP4 padrão...")
     subprocess.run([
         'ffmpeg', '-y', 
         '-i', temp_video, 
         '-i', input_file, 
-        '-c:v', 'copy', 
+        '-c:v', 'libx264', 
         '-c:a', 'aac', 
         '-map', '0:v:0', 
         '-map', '1:a:0', 
@@ -176,16 +105,20 @@ if INCLUDE_AUDIO:
         final_file
     ])
 else:
-    print("📁 [4/5] Áudio desativado. Renomeando arquivo final...")
-    if os.path.exists(final_file):
-        os.remove(final_file)
-    os.rename(temp_video, final_file)
+    print("📁 [3.5/4] Áudio desativado. Convertendo vídeo para MP4 padrão...")
+    subprocess.run([
+        'ffmpeg', '-y', 
+        '-i', temp_video, 
+        '-c:v', 'libx264', 
+        final_file
+    ])
 
-print("✅ [5/5] Arquivo pronto para download!")
+print("✅ [4/4] Arquivo pronto para download!")
 files.download(final_file)
 `;
   };
-  
+    
+
   const scriptContent = generateColabScript();
 
   const handleCopyScript = () => {
@@ -205,7 +138,7 @@ files.download(final_file)
           metadata: {},
           source: [
             "# 🚀 Thumbnail Booster - Pipeline Colab\n",
-            "Mude o ambiente de execução para **T4 GPU** e execute a célula abaixo!"
+            "Mude o ambiente de execução para **T4 GPU** (Ambiente de execução -> Alterar tipo de ambiente) e execute a célula abaixo!"
           ]
         },
         {
@@ -248,11 +181,11 @@ files.download(final_file)
         </div>
 
         <div className="bg-sky-500/10 border border-sky-500/20 rounded-lg p-4 text-xs text-sky-200 space-y-2">
-          <p className="font-bold">Como funciona esta versão blindada:</p>
+          <p className="font-bold">Como funciona esta aba separada:</p>
           <ol className="list-decimal list-inside space-y-1 text-gray-300">
-            <li>Baixe o Notebook atualizado ou copie o script.</li>
-            <li>No Colab, ao rodar, ele detectará se há imagens e pedirá o upload delas automaticamente.</li>
-            <li>Os textos agora usam PIL (suporte completo a acentos e contornos perfeitos!).</li>
+            <li>Baixe o arquivo do Notebook ou copie o script Python abaixo.</li>
+            <li>Abra o Google Colab, faça o upload do notebook e ative a **T4 GPU**.</li>
+            <li>Faça o upload do seu vídeo quando solicitado e baixe o resultado em resolução nativa!</li>
           </ol>
         </div>
 
